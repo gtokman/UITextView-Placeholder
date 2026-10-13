@@ -23,6 +23,8 @@
 #import <objc/runtime.h>
 #import "UITextView+Placeholder.h"
 
+static char updatingPlaceholderKey;
+
 @implementation UITextView (Placeholder)
 
 #pragma mark - Swizzle Dealloc
@@ -203,6 +205,19 @@
 #pragma mark - Update
 
 - (void)updatePlaceholderTextView {
+    // Resizing the owner can synchronously re-enter through frame/bounds KVO.
+    if ([objc_getAssociatedObject(self, &updatingPlaceholderKey) boolValue]) {
+        return;
+    }
+    objc_setAssociatedObject(self, &updatingPlaceholderKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    @try {
+        [self updatePlaceholderTextViewContent];
+    } @finally {
+        objc_setAssociatedObject(self, &updatingPlaceholderKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+}
+
+- (void)updatePlaceholderTextViewContent {
     if (self.text.length) {
         [self.placeholderTextView removeFromSuperview];
         self.accessibilityValue = self.text;

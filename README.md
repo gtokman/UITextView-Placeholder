@@ -8,6 +8,25 @@ A missing placeholder for UITextView.
 
 > **Note**: CocoaPods support has been removed. Please use Swift Package Manager for installation.
 
+Fork maintenance
+----------------
+
+This fork preserves the original placeholder implementation and adds a per-view
+reentrancy guard around placeholder updates. When growing the owning text view
+causes synchronous frame/bounds KVO callbacks, nested updates return immediately
+instead of recursively resizing the view. The guard is cleared with `@finally`,
+so subsequent updates continue normally.
+
+Rendering, attributed placeholders, text-container settings, automatic growth,
+scroll tracking, and accessibility retain the upstream behavior. The original
+MIT license and attribution are retained.
+
+`Tests/ReentrancyTests.swift` covers a layout callback that restores the owner's
+height during resizing. A standalone UIKit comparison on iOS 26.2 observed 20
+bounded recursive frame writes in the original implementation versus one in the
+patched implementation, with a subsequent update succeeding. The full test
+suite has not been rerun for this patch.
+
 Installation
 ------------
 
@@ -17,14 +36,14 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/devxoul/UITextView-Placeholder.git", from: "1.5.0")
+    .package(url: "https://github.com/gtokman/UITextView-Placeholder.git", branch: "main")
 ]
 ```
 
 Or add it through Xcode:
 1. File → Add Package Dependencies...
-2. Enter `https://github.com/devxoul/UITextView-Placeholder.git`
-3. Select the version and add to your target
+2. Enter `https://github.com/gtokman/UITextView-Placeholder.git`
+3. Select the `main` branch (or pin a commit revision) and add to your target
 
 
 Usage
